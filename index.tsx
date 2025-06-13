@@ -1,74 +1,186 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function Index() {
+  const [nome, setNome] = useState("");
+  const [idade, setIdade] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [localidade, setLocalidade] = useState("");
 
-export default function HomeScreen() {
+  const [fotoUri, setFotoUri] = useState<string | null>(null);
+
+  async function escolherFoto() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permissão para acessar a galeria é necessária!");
+      return;
+    }
+
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!resultado.canceled) {
+      setFotoUri(resultado.assets[0].uri);
+    }
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={90}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.containerImg}>
+          <TouchableOpacity onPress={escolherFoto}>
+            <Image
+              source={
+                fotoUri
+                  ? { uri: fotoUri }
+                  : require("../assets/images/icon.png")
+              }
+              style={styles.estiloFoto}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.containerConteudo}>
+          <View style={styles.containerNome}>
+            <TextInput
+              style={[styles.nome, styles.textInput]}
+              placeholder="Andrey Ramalho"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={nome}
+              onChangeText={setNome}
+            />
+          </View>
+          <View style={styles.linhaContainer}>
+            <View style={styles.linha} />
+          </View>
+
+          <View style={styles.containerDados}>
+            <Ionicons name="person" size={24} color="blue" />
+            <TextInput
+              style={[styles.textoDados, styles.textInput]}
+              placeholder="16 anos"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={idade}
+              onChangeText={setIdade}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.containerDados}>
+            <Ionicons name="mail" size={24} color="blue" />
+            <TextInput
+              style={[styles.textoDados, styles.textInput]}
+              placeholder="vaz.santos.andrey@escola.pr.gov.br"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          <View style={styles.containerDados}>
+            <Ionicons name="call" size={24} color="blue" />
+            <TextInput
+              style={[styles.textoDados, styles.textInput]}
+              placeholder="(42) 99544-0293"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={telefone}
+              onChangeText={setTelefone}
+              keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.containerDados}>
+            <Ionicons name="home" size={24} color="blue" />
+            <TextInput
+              style={[styles.textoDados, styles.textInput]}
+              placeholder="Ponta Grossa / PR"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={localidade}
+              onChangeText={setLocalidade}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "black",
+    paddingHorizontal: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  scrollContainer: {
+    flexGrow: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  containerImg: {
+    flex: 1,
+    paddingTop: 60,
+    alignItems: "center",
+  },
+  estiloFoto: {
+    width: 300,
+    height: 175,
+    resizeMode: "contain",
+    borderRadius: 10,
+  },
+  containerConteudo: {
+    flex: 1,
+  },
+  containerNome: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  nome: {
+    fontSize: 40,
+    color: "black",
+    fontWeight: "bold",
+  },
+  linhaContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  linha: {
+    width: "80%",
+    height: 1,
+    backgroundColor: "white",
+  },
+  containerDados: {
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  textoDados: {
+    marginLeft: 10,
+    color: "white",
+    fontSize: 24,
+    flex: 1,
+  },
+  textInput: {
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.3)",
+    color: "white",
   },
 });
