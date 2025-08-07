@@ -1,0 +1,39 @@
+class Quarto:
+    def __init__(self, numero, tipo, valor_diaria, disponivel):
+        self.numero = numero
+        self.tipo = tipo
+        self.valor_diaria = valor_diaria
+        self.disponivel = disponivel
+
+    def exibir_detalhes(self):
+        status = "Disponível" if self.disponivel else "Ocupado"
+        print(f"Quarto {self.numero} - Tipo: {self.tipo} - Diária: R${self.valor_diaria:.2f} - Status: {status}")
+
+    def reservar(self):
+        if self.disponivel:
+            self.disponivel = False
+            print(f"Quarto {self.numero} reservado com sucesso!")
+        else:
+            print(f"Desculpe, o Quarto {self.numero} já está ocupado.")
+
+    def liberar(self):
+        if not self.disponivel:
+            self.disponivel = True
+            print(f"Quarto {self.numero} liberado com sucesso!")
+        else:
+            print(f"Quarto {self.numero} já está disponível.")
+
+    def alterar_preco(self, novo_preco):
+        self.valor_diaria = novo_preco
+        print(f"Novo valor da diária do Quarto {self.numero}: R${self.valor_diaria:.2f}")
+
+
+# CÓDIGO PARA TESTE
+if __name__ == "__main__":
+    quarto1 = Quarto(101, "Casal", 200.00, True)
+    quarto1.exibir_detalhes() 
+    quarto1.reservar()         
+    quarto1.exibir_detalhes() 
+    quarto1.liberar()         
+    quarto1.alterar_preco(250.00) 
+    quarto1.exibir_detalhes()  
