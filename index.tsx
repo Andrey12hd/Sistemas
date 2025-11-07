@@ -1,186 +1,184 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function Index() {
-  const [nome, setNome] = useState("");
-  const [idade, setIdade] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [localidade, setLocalidade] = useState("");
+interface Produto {
+  id: number;
+  nome: string;
+  descricao: string;
+  preco: string;
+  imagem: string;
+}
 
-  const [fotoUri, setFotoUri] = useState<string | null>(null);
+function Main() {
+  const insets = useSafeAreaInsets();
+  const [pesquisa, setPesquisa] = useState("");
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  async function escolherFoto() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Permissão para acessar a galeria é necessária!");
-      return;
-    }
-
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!resultado.canceled) {
-      setFotoUri(resultado.assets[0].uri);
+  async function carregarProdutos(){
+    try {
+      const resposta = await fetch("http://10.210.87.103:3002/produtos/estoque")
+      const dados = await resposta.json()
+      setProdutos(dados);
+    } catch (erro) {
+      console.log(erro)
+    } finally{
+      setLoading(false);
+      setRefreshing(false);
     }
   }
 
+  useEffect(() => {
+    carregarProdutos();
+  }, []);
+
+  const recarregarProdutos = () => {
+    setRefreshing(true);
+    carregarProdutos();
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={90}
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top + 10,
+          paddingBottom: insets.bottom + 10,
+        },
+      ]}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.containerImg}>
-          <TouchableOpacity onPress={escolherFoto}>
+      <View style={styles.bordaPesquisar}>
+        <Text style={styles.textoPesquisar}>Pesquisar: </Text>
+        <TextInput
+          style={styles.inputPesquisar}
+          value={pesquisa}
+          onChangeText={setPesquisa}
+          placeholder="Digite aqui..."
+          placeholderTextColor="#ccc"
+        />
+        <Ionicons
+          name="search"
+          size={24}
+          color="#888888"
+          style={styles.iconePesquisar}
+        />
+      </View>
+
+      <FlatList
+        data={produtos.filter((produto) =>
+          produto.nome.toLowerCase().includes(pesquisa.toLowerCase())
+        )}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
             <Image
-              source={
-                fotoUri
-                  ? { uri: fotoUri }
-                  : require("../assets/images/icon.png")
-              }
-              style={styles.estiloFoto}
+              source={{ uri: item.imagem }}
+              style={styles.imagem}
+              contentFit="cover"
             />
-          </TouchableOpacity>
-        </View>
+            <View style={styles.info}>
+              <Text style={styles.nome}>{item.nome}</Text>
+              <Text style={styles.descricao}>{item.descricao}</Text>
+            </View>
+            <Text style={styles.preco}>R$ {item.preco}</Text>
+          </View>
+        )}
+        contentContainerStyle={styles.lista}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={recarregarProdutos} />
+        }
+      />
+    </View>
+  );
+}
 
-        <View style={styles.containerConteudo}>
-          <View style={styles.containerNome}>
-            <TextInput
-              style={[styles.nome, styles.textInput]}
-              placeholder="Andrey Ramalho"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={nome}
-              onChangeText={setNome}
-            />
-          </View>
-          <View style={styles.linhaContainer}>
-            <View style={styles.linha} />
-          </View>
-
-          <View style={styles.containerDados}>
-            <Ionicons name="person" size={24} color="blue" />
-            <TextInput
-              style={[styles.textoDados, styles.textInput]}
-              placeholder="16 anos"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={idade}
-              onChangeText={setIdade}
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.containerDados}>
-            <Ionicons name="mail" size={24} color="blue" />
-            <TextInput
-              style={[styles.textoDados, styles.textInput]}
-              placeholder="vaz.santos.andrey@escola.pr.gov.br"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={styles.containerDados}>
-            <Ionicons name="call" size={24} color="blue" />
-            <TextInput
-              style={[styles.textoDados, styles.textInput]}
-              placeholder="(42) 99544-0293"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={telefone}
-              onChangeText={setTelefone}
-              keyboardType="phone-pad"
-            />
-          </View>
-          <View style={styles.containerDados}>
-            <Ionicons name="home" size={24} color="blue" />
-            <TextInput
-              style={[styles.textoDados, styles.textInput]}
-              placeholder="Ponta Grossa / PR"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={localidade}
-              onChangeText={setLocalidade}
-            />
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Main />
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
-    paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  containerImg: {
-    flex: 1,
-    paddingTop: 60,
-    alignItems: "center",
-  },
-  estiloFoto: {
-    width: 300,
-    height: 175,
-    resizeMode: "contain",
-    borderRadius: 10,
-  },
-  containerConteudo: {
-    flex: 1,
-  },
-  containerNome: {
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  nome: {
-    fontSize: 40,
-    color: "black",
-    fontWeight: "bold",
-  },
-  linhaContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  linha: {
-    width: "80%",
-    height: 1,
-    backgroundColor: "white",
-  },
-  containerDados: {
-    marginBottom: 12,
+  bordaPesquisar: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 5,
   },
-  textoDados: {
+  textoPesquisar: {
+    marginLeft: 20,
+  },
+  inputPesquisar: {
+    flex: 1,
+    borderWidth: 0.5,
+    borderColor: "#888888",
+    borderRadius: 25,
+    paddingLeft: 20,
+    paddingRight: 20,
+    width: 200,
+  },
+  iconePesquisar: {
+    marginRight: 20,
     marginLeft: 10,
-    color: "white",
-    fontSize: 24,
+  },
+  lista: {
+    paddingHorizontal: 16,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+    marginVertical: 6,
+    borderRadius: 10,
+    elevation: 2,
+  },
+  imagem: {
+    width: 75,
+    height: 60,
+    marginRight: 10,
+    borderRadius: 6,
+  },
+  info: {
     flex: 1,
   },
-  textInput: {
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.3)",
-    color: "white",
+  nome: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  descricao: {
+    fontSize: 12,
+    color: "#555",
+  },
+  preco: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#2e7d32",
+    marginLeft: 8,
   },
 });
